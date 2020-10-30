@@ -7,26 +7,26 @@ const initialState = {
 };
 
 export const setToolValue = (tool, value) => {
-  return { type: "Set_tool_value", tool, value };
+  return { type: "Set_tool_value", payload: { tool, value } };
 };
 
 const allTools = (state = initialState, action) => {
   switch (action.type) {
     case "Set_tool_value":
-      return { ...state, [action.tool]: action.value };
+      return { ...state, [action.payload.tool]: action.payload.value };
     default:
       return state;
   }
 };
 
 export const setActiveTool = (activeTool) => {
-  return { type: "Set_active_tool", activeTool };
+  return { type: "Set_active_tool", payload: activeTool };
 };
 
 const activeTool = (state = "paint-brush", action) => {
   switch (action.type) {
     case "Set_active_tool":
-      return action.activeTool;
+      return action.payload;
     default:
       return state;
   }

@@ -111,9 +111,11 @@ function Base({ handlers, children, stageWidth }) {
 
 function StorageComp(props) {
   const storage = props.storage;
-  const storageComponents = storage.map((item, index) => {
-    const Shape = componentMatcher[item.figure.traceType];
-    return <Shape {...item.figure} key={index} />;
+
+  const storageComponents = storage.map((shape, index) => {
+    console.log(shape, "UUU")
+    const Shape = componentMatcher[shape.payload.traceType];
+    return <Shape {...shape.payload} key={index} />;
   });
 
   return <>{storageComponents}</>;
@@ -135,14 +137,12 @@ function Field(props) {
     activeTool,
     sidebarWidth,
     handleShape,
-    handleUndoRedo,
     allShapes,
     allTools,
   } = props;
 
   const stageWidth = useResize(sidebarWidth);
 
-  //console.log(`Field rerendered with width: ${stageWidth}`);
   const [currentShape, setCurrentShape] = useState({});
   //const [storage, addToStorage] = useState([]);
   const isMouseDown = useRef(false);
@@ -151,7 +151,7 @@ function Field(props) {
   const traceType = traceTypeMatcher[activeTool];
 
   //WILL BE REPLACED LATER WITH MIDDLEWARE
-  useReceivedData(handleShape, handleUndoRedo, allShapes);
+  //useReceivedData(handleShape, handleUndoRedo, allShapes);
 
   const handleMouseDown = useCallback(
     (event) => {
@@ -163,6 +163,10 @@ function Field(props) {
         traceType,
         shapeProps: { ...coordinatesObj, ...allTools },
       };
+      //const obj = {
+         //shapeType
+         //shapeProps: {...coordinatesObj, allTools.}
+      //}
       setCurrentShape(obj);
       //setCurrentShape({points: [x - sidebarWidth, y], ...otherProps})
     },
@@ -195,18 +199,13 @@ function Field(props) {
     (event) => {
       isMouseDown.current = false;
       //addToStorage([...storage, currentShape]);
-      handleShape({ id: connectionId, figure: currentShape });
-      sendDataToServer({
-        type: "shape",
-        shape: {
-          id: connectionId,
-          figure: currentShape,
-        },
-      });
+      handleShape(connectionId, currentShape);
+      sendDataToServer(addShape(connectionId, currentShape));
     },
     [currentShape, handleShape]
   );
-
+  //TODO 
+  //Correct line below
   if (activeTool) {
     return (
       <Base
@@ -238,9 +237,9 @@ const mapStateToProps = (state) => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  handleShape: (shape) => dispatch(addShape(shape)),
+  handleShape: (id, payload) => dispatch(addShape(id, payload)),
   //WILL BE REPLACED LATER WITH MIDDLEWARE
-  handleUndoRedo: dispatch,
+  // handleUndoRedo: dispatch,
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Field);

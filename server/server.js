@@ -8,7 +8,7 @@ let id = 0;
 
 wss.on("connection", (ws) => {
   clients.add(ws);
-  ws.send(JSON.stringify({ type: "id", id: id }));
+  ws.send(JSON.stringify({ type: "id", payload: id }));
   id++;
   if (clients.size > 1) {
     queue.add(ws);
@@ -20,20 +20,14 @@ wss.on("connection", (ws) => {
     const parsedMessage = JSON.parse(message);
     switch (parsedMessage.type) {
       case "receiveShapes":
-        if (parsedMessage.shapes.length > 0 && queue.size > 0) {
-          shapes = parsedMessage.shapes;
+        if (parsedMessage.payload.length > 0 && queue.size > 0) {
+          payload = parsedMessage.payload;
           const wsReceiver = [...queue][0];
           queue.delete(wsReceiver);
-          wsReceiver.send(JSON.stringify({ type: "receiveShapes", shapes }));
+          wsReceiver.send(JSON.stringify({ type: "receiveShapes", payload }));
         }
         break;
-      case "shape":
-        for (const client of clients) {
-          if (ws !== client) {
-            client.send(message);
-          }
-        }
-        break;
+      case "Add_shape":
       case "Undo":
       case "Redo": {
         for (const client of clients) {
@@ -50,7 +44,6 @@ wss.on("connection", (ws) => {
     clients.delete(ws);
     queue.delete(ws);
     if (clients.size === 0) {
-      shapes = [];
       id = 0;
     }
   });
