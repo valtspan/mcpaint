@@ -12,15 +12,15 @@ import { sendDataToServer, connectionId } from "../api/socket-api";
 // {icon-name: [list of toolProperties elements]}
 //toolProperties element corresponds to specific function(BrushSize, BrushColor) which controls corresponding state (brushSize, brushColor)
 
-const config = {
-  bars: [],
-  "pencil-alt": [],
-  "paint-brush": ["brush-palette", "brush-size"],
-  eraser: ["eraser-size"],
-  "vector-square": ["rect-palette"],
-  save: [],
-  history: ["history-list", "undo-redo-panel"],
-};
+// const config = {
+//   bars: [],
+//   "pencil-alt": [],
+//   "paint-brush": ["brush-palette", "brush-size"],
+//   eraser: [/*"eraser-size"*/],
+//   "vector-square": ["rect-palette"],
+//   save: [],
+//   history: ["history-list", "undo-redo-panel"],
+// };
 
 function toolColor(tool) {
   return function (props) {
@@ -34,26 +34,41 @@ function toolSize(tool) {
   };
 }
 
-const BrushColor = toolColor("brushColor");
-const RectColor = toolColor("rectangleColor");
+// const BrushColor = toolColor("brushColor");
+// const RectColor = toolColor("rectangleColor");
 
-const BrushSize = toolSize("brushSize");
-const EraserSize = toolSize("eraserSize");
+// const BrushSize = toolSize("brushSize");
+//const EraserSize = toolSize("eraserSize");
+
+const BrushColor = toolColor("paint-brush");
+const RectColor = toolColor("vector-square");
+
+const BrushSize = toolSize("paint-brush");
+
+// const componentMatcher = {
+//   "brush-palette": BrushColor,
+//   "rect-palette": RectColor,
+//   "brush-size": BrushSize,
+//   //"eraser-size": EraserSize,
+//   "history-list": HistoryList,
+//   "undo-redo-panel": ButtonPanel,
+// };
 
 const componentMatcher = {
-  "brush-palette": BrushColor,
-  "rect-palette": RectColor,
-  "brush-size": BrushSize,
-  "eraser-size": EraserSize,
-  "history-list": HistoryList,
-  "undo-redo-panel": ButtonPanel,
-};
+  bars: [],
+  "pencil-alt": [],
+  "paint-brush": [ BrushColor, BrushSize ],
+  eraser: [],
+  "vector-square": [ RectColor ],
+  save: [],
+  history: [ HistoryList, ButtonPanel ]
+}
 
 function Color({ tool, toolState, handleTool }) {
-  const color = toolState[tool];
+  const color = toolState[tool].color;
   const handleChangeComplete = useCallback(
     (event) => {
-      handleTool(tool, event.hex);
+      handleTool(tool, "color", event.hex);
     },
     [handleTool, tool]
   );
@@ -61,10 +76,10 @@ function Color({ tool, toolState, handleTool }) {
 }
 
 function Size({ tool, toolState, handleTool }) {
-  const size = toolState[tool];
+  const size = toolState[tool].size;
   const handleChangeComplete = useCallback(
     (event) => {
-      handleTool(tool, Number(event.target.value));
+      handleTool(tool, "size", Number(event.target.value));
     },
     [handleTool, tool]
   );
@@ -85,12 +100,13 @@ function HistoryList({ shapes }) {
   //change condition when storage is not undefined
   //extract code below in a separate function
   let lastShapes;
-  if (shapes.length > 4) {
-    lastShapes = shapes
-      .slice(shapes.length - 5)
-      .map((shape) => shape.traceType);
-  } else if (shapes.length > 0) {
-    lastShapes = shapes.map((shape) => shape.traceType);
+  const filteredShapes = shapes.filter((shape) => shape.id === connectionId)
+  if (filteredShapes.length > 4) {
+    lastShapes = filteredShapes
+      .slice(filteredShapes.length - 5)
+      .map((shape) => shape.payload.traceType);
+  } else if (filteredShapes.length > 0) {
+    lastShapes = filteredShapes.map((shape) => shape.payload.traceType);
   } else {
     lastShapes = [];
   }
@@ -156,10 +172,12 @@ function ButtonPanel({ canUndo, canRedo, handleUndo, handleRedo }) {
 let ToolProperties = (props) => {
   const { activeTool, getToolPropertiesWidth, ...otherProps } = props;
 
-  const toolPropertiesElements = activeTool ? config[activeTool] : [];
-  const toolPropertiesComponents = toolPropertiesElements.map(
-    (element) => componentMatcher[element]
-  );
+  //const toolPropertiesElements = activeTool ? config[activeTool] : [];
+  // const toolPropertiesComponents = toolPropertiesElements.map(
+  //   (element) => componentMatcher[element]
+  // );
+
+  const toolPropertiesComponents = activeTool ? componentMatcher[activeTool] : [];
 
   const toolPropertiesRef = useSidebar(getToolPropertiesWidth);
 
@@ -186,7 +204,7 @@ const mapStateToProps = (state) => ({
 const mapDispatchToProps = (dispatch) => ({
   getToolPropertiesWidth: (width) =>
     dispatch(setPanelWidth("toolPropertiesWidth", width)),
-  handleTool: (tool, value) => dispatch(setToolValue(tool, value)),
+  handleTool: (tool, property, value) => dispatch(setToolValue(tool, property, value)),
   handleUndo: () => dispatch({ type: "Undo", id: connectionId }),
   handleRedo: () => dispatch({ type: "Redo", id: connectionId }),
 });

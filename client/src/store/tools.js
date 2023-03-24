@@ -1,19 +1,24 @@
-const initialState = {
-  brushColor: "#194D33",
-  brushSize: 5,
-  eraserColor: "#fff",
-  eraserSize: 10,
-  rectangleColor: "#fff",
-};
+// const initialState = {
+//   brushColor: "#194D33",
+//   brushSize: 5,
+//   // eraserColor: "#fff",
+//   // eraserSize: 10,
+//   rectangleColor: "#fff",
+// };
 
-export const setToolValue = (tool, value) => {
-  return { type: "Set_tool_value", payload: { tool, value } };
+const initialState = {
+  "paint-brush": { color: "#194D33", size: 5 },
+  "vector-square": { color: "#194D33" }
+}
+
+export const setToolValue = (tool, property, value) => {
+  return { type: "Set_tool_value", payload: { tool, property, value } };
 };
 
 const allTools = (state = initialState, action) => {
   switch (action.type) {
     case "Set_tool_value":
-      return { ...state, [action.payload.tool]: action.payload.value };
+      return { ...state, [action.payload.tool]: { ...state[action.payload.tool], [action.payload.property]: action.payload.value} };
     default:
       return state;
   }

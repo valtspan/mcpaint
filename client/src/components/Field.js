@@ -7,7 +7,6 @@ import { useResize } from "../hooks/useResize";
 import { addShape } from "../store/shapes";
 
 import {
-  useReceivedData,
   sendDataToServer,
   connectionId,
 } from "../api/socket-api";
@@ -17,7 +16,7 @@ function mouseHandlersMatcher(activeTool) {
     //case "bars":
     //case "pencil-alt":
     case "paint-brush":
-    case "eraser":
+    // case "eraser":
       return [
         (x, y) => ({ points: [x, y] }),
         (x, y, prevState) => {
@@ -46,25 +45,33 @@ function mouseHandlersMatcher(activeTool) {
     //case "save":
   }
 }
-const traceTypeMatcher = {
-  "paint-brush": "brush-line",
-  eraser: "eraser-line",
-  "vector-square": "rectangle",
-};
+// const traceTypeMatcher = {
+//   "paint-brush": "brush-line",
+//   //eraser: "eraser-line",
+//   "vector-square": "rectangle",
+// };
+
+// const componentMatcher = {
+//   "brush-line": McLine,
+//   //"eraser-line": McLine,
+//   rectangle: McRect,
+// };
+
 const componentMatcher = {
-  "brush-line": McLine,
-  "eraser-line": McLine,
-  rectangle: McRect,
-};
+  "paint-brush": McLine,
+  "vector-square": McRect
+}
 
 function McLine({ traceType, shapeProps }) {
   //const color = props.currentShape.shapeType
-  const color =
-    traceType === "eraser-line"
-      ? shapeProps.eraserColor
-      : shapeProps.brushColor;
-  const size =
-    traceType === "eraser-line" ? shapeProps.eraserSize : shapeProps.brushSize;
+  // const color =
+  //   traceType === "eraser-line"
+  //     ? shapeProps.eraserColor
+  //     : shapeProps.brushColor;
+  const color = shapeProps.color;
+  // const size =
+  //   traceType === "eraser-line" ? shapeProps.eraserSize : shapeProps.brushSize;
+  const size = shapeProps.size;
   return (
     <Line
       points={shapeProps.points}
@@ -83,7 +90,7 @@ function McRect({ shapeProps }) {
       y={shapeProps.y}
       width={shapeProps.width}
       height={shapeProps.height}
-      fill={shapeProps.rectangleColor}
+      fill={shapeProps.color}
     />
   );
 }
@@ -113,7 +120,6 @@ function StorageComp(props) {
   const storage = props.storage;
 
   const storageComponents = storage.map((shape, index) => {
-    console.log(shape, "UUU")
     const Shape = componentMatcher[shape.payload.traceType];
     return <Shape {...shape.payload} key={index} />;
   });
@@ -148,7 +154,8 @@ function Field(props) {
   const isMouseDown = useRef(false);
   //console.log(stageWidth);
   const [mouseDownWriter, mouseMoveWriter] = mouseHandlersMatcher(activeTool);
-  const traceType = traceTypeMatcher[activeTool];
+  //const traceType = traceTypeMatcher[activeTool];
+  const traceType = activeTool;
 
   //WILL BE REPLACED LATER WITH MIDDLEWARE
   //useReceivedData(handleShape, handleUndoRedo, allShapes);
@@ -161,7 +168,7 @@ function Field(props) {
       const coordinatesObj = mouseDownWriter(x - sidebarWidth, y);
       const obj = {
         traceType,
-        shapeProps: { ...coordinatesObj, ...allTools },
+        shapeProps: { ...coordinatesObj, ...allTools[traceType] },
       };
       //const obj = {
          //shapeType
@@ -187,7 +194,7 @@ function Field(props) {
           );
           return {
             traceType,
-            shapeProps: { ...coordinatesObj, ...allTools },
+            shapeProps: { ...coordinatesObj, ...allTools[traceType] },
           };
           //return {points: [...prevPoints, x - sidebarWidth, y], ...otherProps}
         });
